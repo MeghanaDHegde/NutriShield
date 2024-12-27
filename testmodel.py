@@ -110,29 +110,7 @@ import google.generativeai as genai
 genai.configure(api_key="AIzaSyBCOUSy8DZ5Qzxhqq0gOkRCUJEHNVLjoZM")
 
 
-def get_food_info_from_gpt2(food_name):
-    """
-    Queries the Gemini model for detailed food information in JSON format.
 
-    Args:
-        food_name (str): The name of the food item.
-
-    Returns:
-        dict: Parsed JSON-like response containing food information.
-    """
-    # Create the prompt
-
-
-    try:
-        # Generate response from the model
-        response = genai.GenerativeModel("gemini-1.5-flash").generate_content(
-            prompt, max_output_tokens=300
-        )
-
-        # Parse the response
-        return response.text
-    except Exception as e:
-        return {"error": f"Failed to get response from Gemini: {str(e)}"}
 
 
 

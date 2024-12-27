@@ -1,0 +1,12 @@
+Disease,Harmful Ingredients,Harmful Amount (grams/day)
+Diabetes,"Sugar, Refined Carbs, High-Fructose Corn Syrup",25
+Hypertension,"Salt, Caffeine, Alcohol",6
+Celiac Disease,"Gluten (Wheat, Barley, Rye)",1
+Chronic Kidney Disease,"Sodium, Phosphorus Additives, High-Protein Foods",2
+Heart Disease,"Saturated Fats, Trans Fats, Red Meat",20
+Lactose Intolerance,"Milk, Dairy Products, Lactose Additives",10
+Irritable Bowel Syndrome (IBS),"Spicy Foods, High-Fat Foods, Artificial Sweeteners",15
+Gout,"High-Purine Foods (Organ Meats, Seafood), Alcohol",300
+Liver Disease,"Alcohol, Processed Foods, Sugary Drinks",10
+Osteoporosis,"Excessive Salt, Caffeine, Carbonated Drinks",2
+Cancer (General),"Processed Meats, Sugary Foods, Alcohol, Trans Fats",50

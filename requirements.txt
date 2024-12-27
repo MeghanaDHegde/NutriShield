@@ -1,1 +1,7 @@
 pyzbar
+streamlit
+pyzbar
+opencv-python
+tensorflow
+pandas
+scikit-learn

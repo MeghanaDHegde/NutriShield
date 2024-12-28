@@ -5,5 +5,4 @@ opencv-python
 tensorflow
 pandas
 scikit-learn
-zbar
 pillow

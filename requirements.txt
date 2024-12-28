@@ -1,7 +1,7 @@
 pyzbar
 streamlit
 pyzbar
-opencv-python
+opencv-python-headless
 tensorflow
 pandas
 scikit-learn

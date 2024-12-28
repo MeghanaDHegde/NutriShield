@@ -6,3 +6,4 @@ tensorflow
 pandas
 scikit-learn
 zbar
+pillow

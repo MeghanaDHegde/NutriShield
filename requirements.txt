@@ -1,6 +1,6 @@
 streamlit
 pyzbar
-opencv-python
+opencv-python-headless
 numpy
 tensorflow
 pandas
@@ -8,4 +8,4 @@ Pillow
 PyPDF2
 requests
 google-generativeai
-scikitlearn
+scikit-learn

@@ -8,4 +8,4 @@ scikit-learn
 pillow
 pyPDF2
 json
-google-generative ai
+google-generative-ai

@@ -53,18 +53,14 @@ def load_general_model():
 
 food_model = load_food_model()
 general_model = load_general_model()
-# Step 2: Extract the food labels (class names) from your training dataset
-train_dir = r"C:\Users\Meghana D Hegde\Downloads\archive (6)\dataset\train"  # Adjust path as necessary
-train_generator = tf.keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
-    train_dir,
-    target_size=(224, 224),
-    batch_size=32,
-    class_mode='categorical',
-    shuffle=False
-)
+def load_class_labels(file_path):
+    with open(file_path, 'r') as f:
+        food_labels = json.load(f)
+    return food_labels
 
-# The class labels are stored in the 'class_indices' attribute
-food_labels = list(train_generator.class_indices.keys())
+# Load the class labels from the saved JSON file
+food_labels = load_class_labels('class_labels.json')
+print("Class Labels:", food_labels)
 
 
 # Step 3: Function to predict food from a new ima

@@ -513,103 +513,45 @@ elif app_mode == "Chatbot":
     components.iframe(chatbot_url, width=800, height=600)
 
 elif app_mode == "Diet Plans":
-    # Assuming `recipe_model.pkl` is loaded as in the previous example
-    model_file_path = r"C:\Users\Meghana D Hegde\Downloads\recipe_model.pkl"
-    with open(model_file_path, 'rb') as model_file:
-        similarity_matrix, recipe_data, vectorizer, svd = pickle.load(model_file)
-
-
-    # Function to classify dietary preferences based on ingredients
-    def classify_dietary_preference(ingredients, dietary_preference):
-        ingredients = " ".join(ingredients).lower()
-
-        # Define keywords for classification
-        vegetarian_exclude_keywords = ["meat", "chicken", "fish", "mutton", "pork", "lamb", "bacon", "turkey", "beef",
-                                       "duck", "sausage", "ham", "goat", "veal", "game", "rabbit", "venison",
-                                       "shellfish"]
-        vegan_exclude_keywords = ["meat", "chicken", "fish", "pork", "lamb", "bacon", "turkey", "cheese", "milk",
-                                  "butter",
-                                  "eggs", "honey", "yogurt", "cream", "gelatin"]
-        non_vegetarian_keywords = ["chicken", "fish", "pork", "lamb", "bacon", "turkey", "beef", "duck", "sausage",
-                                   "ham",
-                                   "goat", "veal", "game", "rabbit", "venison", "shellfish", "shrimp", "crab",
-                                   "lobster"]
-
-        if dietary_preference == "Non-Vegetarian":
-            if any(keyword in ingredients for keyword in non_vegetarian_keywords):
-                return True
-            else:
-                return False
-
-        if dietary_preference == "Vegetarian":
-            if any(keyword in ingredients for keyword in vegetarian_exclude_keywords):
-                return False
-            else:
-                return True
-
-        if dietary_preference == "Vegan":
-            if any(keyword in ingredients for keyword in vegan_exclude_keywords):
-                return False
-            else:
-                return True
-
-        return True
-
-
-    # Filter recipes based on user input
-    def filter_recipes(region, allergens, dietary_preference):
-        # Filter by region
-        filtered_recipes = recipe_data[recipe_data['region'].str.contains(region, case=False, na=False)]
-
-        # Filter by allergens
-        if allergens:
-            for allergen in allergens:
-                filtered_recipes = filtered_recipes[~filtered_recipes['ingredients'].apply(
-                    lambda x: any(allergen.lower() in ingredient.lower() for ingredient in eval(x)))]
-
-        # Filter by dietary preference
-        if dietary_preference != "Any":
-            filtered_recipes['dietary_preference'] = filtered_recipes['ingredients'].apply(
-                lambda x: classify_dietary_preference(eval(x), dietary_preference))
-            filtered_recipes = filtered_recipes[filtered_recipes['dietary_preference'] == True]
-
-        return filtered_recipes
-
-
-    # Main diet plan generation function
-    def generate_diet_plan(region_input, allergen_input, dietary_preference_input):
-        st.subheader("Recommended Recipes for Your Diet Plan:")
-
-        # Filter recipes based on user input
-        filtered_recipes = filter_recipes(region_input, allergen_input, dietary_preference_input)
-
-        if filtered_recipes.empty:
-            st.write("No recipes found based on your criteria.")
-        else:
-            for _, recipe in filtered_recipes.iterrows():
-                st.write(f"**{recipe['name']}**")
-                st.write(f"**Region:** {recipe['region']}")
-                st.write(f"**Ingredients:** {recipe['ingredients']}")
-                st.write(f"**Dietary Preference:** {recipe.get('dietary_preference', 'Unknown')}")
-                st.write(f"---")
-
-
     # Streamlit UI setup
-   
     st.title("Diet Plan Generator 🍽️")
 
     # Sidebar for user input
     st.sidebar.header("Input Criteria")
 
     regions = ['Fusion', 'France', 'Greece', 'Italy', 'Korea', 'Mediterranean', 'Mexico', 'Spain', 'Thailand',
-               'Vietnam',
-               'Japan', 'India', 'China', 'Africa', 'USA']
+               'Vietnam', 'Japan', 'India', 'China', 'Africa', 'USA']
     region_input = st.sidebar.selectbox("Select region", regions)
 
     allergen_input = st.sidebar.multiselect("Select allergens to avoid",
                                             ["Gluten", "Dairy", "Nuts", "Shellfish", "Soy", "Eggs"])
     dietary_preference_input = st.sidebar.selectbox("Select dietary preference",
                                                     ["Any", "Vegetarian", "Non-Vegetarian", "Vegan"])
+
+    # Function to get diet plan from Gemini API
+    def get_diet_plan_from_gemini(region, allergens, dietary_preference):
+        try:
+            # Replace with the actual Gemini API model for diet plan generation
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            query = f"Generate a diet plan that meets the following criteria:\nRegion: {region}\nAllergens: {', '.join(allergens)}\nDietary Preference: {dietary_preference}.\nInclude meal suggestions, ingredients, and preparation instructions."
+
+            response = model.generate_content(query)
+            return response.text
+
+        except Exception as e:
+            return f"An error occurred while fetching the diet plan: {str(e)}"
+
+    # Main diet plan generation function
+    def generate_diet_plan(region_input, allergen_input, dietary_preference_input):
+        st.subheader("Recommended Diet Plan:")
+
+        # Get diet plan from Gemini API
+        diet_plan = get_diet_plan_from_gemini(region_input, allergen_input, dietary_preference_input)
+
+        if diet_plan:
+            st.write(diet_plan)
+        else:
+            st.write("No diet plan found based on your criteria.")
 
     # Button to trigger diet plan generation
     if st.sidebar.button("Generate Diet Plan"):

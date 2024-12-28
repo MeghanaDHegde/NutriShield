@@ -77,7 +77,7 @@ for i in range(0, num_samples, batch_size):
 print("Similarity matrix computation complete.", flush=True)
 
 # Save the model and required data
-model_file_path = r"C:\Users\Meghana D Hegde\Downloads\recipe_model.pkl"
+model_file_path = r"C:\Users\Meghana D Hegde\PycharmProjects\pythonProject1\recipe_model.pkl"
 print("Saving the model and data...", flush=True)
 
 try:

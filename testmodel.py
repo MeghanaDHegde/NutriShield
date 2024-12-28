@@ -1,4 +1,5 @@
 import streamlit as st
+from pyzbar.pyzbar import decode
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -382,42 +383,14 @@ elif app_mode == "User Profile":
 
 # Barcode Scanner Screen
 # Barcode Scanner Screen
-def detect_barcode_opencv(image):
-    # Convert to grayscale for edge detection
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Apply Gaussian blur to reduce noise and improve contour detection
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    # Perform edge detection
-    edges = cv2.Canny(blurred, 100, 200)
-
-    # Find contours in the edge-detected image
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Sort contours based on area and assume largest contour is the barcode
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
-
-    # Iterate over the contours to find a rectangular shape (barcode)
-    for contour in contours:
-        # Approximate the contour to a polygon
-        epsilon = 0.02 * cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, epsilon, True)
-
-        # If the polygon has 4 points, it may be a barcode (rectangular object)
-        if len(approx) == 4:
-            x, y, w, h = cv2.boundingRect(approx)
-            barcode_image = image[y:y + h, x:x + w]
-
-            # For now, return the cropped barcode area for further processing
-            return barcode_image
-    return None
 elif app_mode == "Barcode Scanner":
     st.header("Barcode Scanner")
     st.write("Capture an image to scan the barcode. You can either use your camera or upload an image.")
 
     # Option to use webcam or upload an image
     uploaded_img = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+    # Capture image using camera
     img_file = st.camera_input("Take a picture to scan the barcode")
 
     # Handle both uploaded image and camera input
@@ -427,6 +400,7 @@ elif app_mode == "Barcode Scanner":
         file_bytes = np.asarray(bytearray(uploaded_img.read()), dtype=np.uint8)
         img = cv2.imdecode(file_bytes, 1)
         st.write("Image uploaded.")
+
     elif img_file:
         # If user used the camera, convert it to OpenCV format
         file_bytes = np.asarray(bytearray(img_file.read()), dtype=np.uint8)
@@ -437,15 +411,13 @@ elif app_mode == "Barcode Scanner":
         # Show the image
         st.image(img, caption="Scanned Image", use_column_width=True)
 
-        # Detect barcode using OpenCV
-        barcode_img = detect_barcode_opencv(img)
+        # Decode the barcode
+        decoded_objects = decode(img)
+        if decoded_objects:
+            barcode_data = decoded_objects[0].data.decode("utf-8")
+            st.success(f"Decoded Barcode: {barcode_data}")
 
-        if barcode_img is not None:
-            st.success("Barcode detected!")
-            st.image(barcode_img, caption="Detected Barcode Image", use_column_width=True)
-
-            # Simulate barcode data for demonstration (replace with actual barcode decoding logic)
-            barcode_data = "1234567890"  # Example placeholder barcode
+            # Fetch nutritional, allergen, and ingredients data
             food_data = fetch_food_data(barcode_data)
 
             if "error" in food_data:
@@ -468,57 +440,63 @@ elif app_mode == "Barcode Scanner":
 
                 # Extract allergens from the product's allergens field
                 if food_data["allergens"] != "No allergens listed.":
-                    allergens_from_ingredients += [
-                        allergen.strip().lower() for allergen in food_data["allergens"].split(',')
-                    ]
+                    allergens_from_ingredients += [allergen.strip().lower() for allergen in food_data["allergens"].split(',')]
                 allergens_from_ingredients = list(set(allergens_from_ingredients))  # Remove duplicates
 
+                # Debugging: Display allergens found in the food data
                 st.write("Allergens found in the food data:", allergens_from_ingredients)
 
                 st.subheader("⚠ Allergens:")
                 if allergens_from_ingredients:
                     found_allergens = ", ".join(allergens_from_ingredients)
                     st.warning(f"⚠ Allergen Warning: Contains allergens: {found_allergens}")
-
+                # Health Risk Alert based on user profile allergies
                 # Health Risk Alert based on user profile allergies
                 if 'allergies' in st.session_state.user_profile:
                     user_allergies = set(st.session_state.user_profile['allergies'])
+                    # Make sure the user allergies are lowercased for case-insensitive comparison
                     user_allergies = {allergy.strip().lower() for allergy in user_allergies}
 
+                    # Debugging: Display user profile allergies
+                    st.write("User allergies (profile):", user_allergies)
+
+                    # Strip and lowercase food allergens as well
+                    allergens_from_ingredients = [allergen.strip().lower() for allergen in allergens_from_ingredients]
+
+                    # Debugging: Display allergens extracted from the food
+                    st.write("Allergens extracted from food:", allergens_from_ingredients)
+
+                    # Find the intersection between user allergies and food allergens
                     risk_allergens = user_allergies & set(allergens_from_ingredients)
 
+                    # Debugging: Display the intersection of user allergies and food allergens
+                    st.write("Risk allergens found:", risk_allergens)
+
+                    # If there are any risk allergens, show the warning
                     if risk_allergens:
                         risk_allergens_str = ', '.join(risk_allergens)
                         st.markdown(
                             f"""
-                                    <div style="background-color: #FFCCCB; border-radius: 10px; padding: 20px; 
-                                    border: 2px solid red; font-size: 20px; color: red; font-weight: bold;">
-                                        ⚠ <b>Risk Alert:</b> Your medical record indicates allergies to 
-                                        <span style="color: darkred;">{risk_allergens_str}</span>. <br> 
-                                        <b>Please proceed with caution!</b>
+                                    <div style="background-color: #FFCCCB; border-radius: 10px; padding: 20px; border: 2px solid red; font-size: 20px; color: red; font-weight: bold;">
+                                        ⚠ <b>Risk Alert:</b> Your medical record indicates allergies to <span style="color: darkred;">{risk_allergens_str}</span>. <br> <b>Please proceed with caution!</b>
                                     </div>
-                                """,
+                                    """,
                             unsafe_allow_html=True
                         )
                     else:
                         st.write("No risk allergens found.")
-
-                    # Load health risk CSV
-                    csv_file_path = r"C:\Users\Meghana D Hegde\Downloads\disease_ingredient_harmful_amount_dataset.csv"
+                    csv_file_path = r"C:\Users\Meghana D Hegde\Downloads\disease_ingredient_harmful_amount_dataset.csv"  # Replace with your CSV file path
                     health_risks_df = load_csv(csv_file_path)
 
                     # Check for harmful ingredients
-                    harmful_results = check_harmful_ingredients_csv(
-                        food_data["ingredients"].split(", "), st.session_state.user_profile, health_risks_df
-                    )
+                    harmful_results = check_harmful_ingredients_csv(food_data["ingredients"].split(", "),
+                                                                    st.session_state.user_profile, health_risks_df)
 
                     if harmful_results:
                         st.subheader("⚠ Health Risk Check:")
                         for result in harmful_results:
                             st.warning(
-                                f"Disease: {result['Disease']} - Harmful Ingredient: {result['Harmful Ingredient']} "
-                                f"exceeds the threshold of {result['Threshold (grams/day)']} grams/day."
-                            )
+                                f"Disease: {result['Disease']} - Harmful Ingredient: {result['Harmful Ingredient']} exceeds the threshold of {result['Threshold (grams/day)']} grams/day.")
                     else:
                         st.write("No harmful ingredients detected based on your medical conditions.")
 

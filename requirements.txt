@@ -9,4 +9,3 @@ PyPDF2
 requests
 google-generativeai
 scikit-learn
-pickle5

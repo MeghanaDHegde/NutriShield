@@ -4,7 +4,6 @@ opencv-python
 numpy
 tensorflow
 pandas
-pickle
 json
 Pillow
 PyPDF2

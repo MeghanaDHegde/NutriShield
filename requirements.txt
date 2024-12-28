@@ -4,8 +4,8 @@ opencv-python
 numpy
 tensorflow
 pandas
-pickle5
-json5
+pickle
+json
 Pillow
 PyPDF2
 requests

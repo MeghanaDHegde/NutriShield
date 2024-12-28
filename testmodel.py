@@ -514,7 +514,7 @@ elif app_mode == "Chatbot":
 
 elif app_mode == "Diet Plans":
     # Assuming `recipe_model.pkl` is loaded as in the previous example
-    model_file_path = "recipe_model.pkl"
+    model_file_path = r"C:\Users\Meghana D Hegde\Downloads\recipe_model.pkl"
     with open(model_file_path, 'rb') as model_file:
         similarity_matrix, recipe_data, vectorizer, svd = pickle.load(model_file)
 

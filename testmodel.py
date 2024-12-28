@@ -12,7 +12,7 @@ import streamlit.components.v1 as components
 import pandas as pd
 import pickle
 from PyPDF2 import PdfReader
-
+st.legacy_caching.clear_cache()
 # Load the Food Database
 def load_csv(file_path=r"C:\Users\Meghana D Hegde\Downloads\disease_ingredient_harmful_amount_dataset.csv"):
     return pd.read_csv(file_path)

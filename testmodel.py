@@ -334,9 +334,116 @@ st.sidebar.title("Navigation")
 app_mode = st.sidebar.radio("Choose the app mode", ["Home", "User Profile", "Barcode Scanner","Food Scanner","Chatbot","Diet Plans"])
 
 # Home Screen
+PROFILE_FILE = "user_profiles.json"
+PASSWORD_FILE = "user_credentials.json"
+
+# Utility Functions
+def is_valid_email(email):
+    """Check if the provided email has a valid format."""
+    return re.match(r"[^@]+@[^@]+\.[^@]+", email) is not None
+
+def hash_password(password):
+    """Hash the password using SHA-256."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def save_to_database(email, password_hash):
+    """Save email and hashed password to the database."""
+    if os.path.exists(PASSWORD_FILE):
+        with open(PASSWORD_FILE, "r") as file:
+            data = json.load(file)
+    else:
+        data = {}
+
+    data[email] = password_hash
+
+    with open(PASSWORD_FILE, "w") as file:
+        json.dump(data, file)
+
+def get_stored_password_hash(email):
+    """Retrieve the hashed password for a given email."""
+    if os.path.exists(PASSWORD_FILE):
+        with open(PASSWORD_FILE, "r") as file:
+            data = json.load(file)
+        return data.get(email)
+    return None
+
+def verify_password(email, input_password):
+    """Verify if the input password matches the stored hash."""
+    stored_hash = get_stored_password_hash(email)
+    input_hash = hash_password(input_password)
+    return stored_hash == input_hash
+
+def check_email_exists(email):
+    """Check if the email exists in the database."""
+    if os.path.exists(PASSWORD_FILE):
+        with open(PASSWORD_FILE, "r") as file:
+            data = json.load(file)
+        return email in data
+    return False
+
+def generate_reset_link(email):
+    """Generate a mock reset link."""
+    return f"https://example.com/reset-password?email={email}"
+
+def send_email(email, subject, body):
+    """Mock email sending function."""
+    st.info(f"Email sent to {email} with subject '{subject}' and body: {body}")
+
+# Initialize session state for login
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+
+
 if app_mode == "Home":
     st.header("Welcome to NUTRISHIELD")
     st.write("Navigate to the User Profile or Barcode Scanner to get started.")
+
+    if not st.session_state.logged_in:
+        st.header("Login to your account")
+
+        # First-time setup or normal login
+        email_input = st.text_input("Enter your email")
+        password_input = st.text_input("Password", type="password")
+
+        if st.button("Login"):
+            if is_valid_email(email_input):
+                if verify_password(email_input, password_input):
+                    st.session_state.logged_in = True
+                    st.success("Login successful!")
+                else:
+                    st.error("Incorrect email or password. Please try again.")
+            else:
+                st.error("Invalid email format.")
+
+        # Forgot password functionality
+        if st.button("Forgot Password"):
+            recovery_email = st.text_input("Enter your registered email for password reset")
+            if recovery_email:
+                if check_email_exists(recovery_email):
+                    reset_link = generate_reset_link(recovery_email)
+                    send_email(recovery_email, "Password Reset", f"Click the link to reset your password: {reset_link}")
+                    st.success("Password reset instructions have been sent to your email.")
+                else:
+                    st.error("Email not found. Please register or try again.")
+
+        # First-time setup
+        if not check_email_exists(email_input):
+            st.subheader("Register your account")
+            new_email = st.text_input("Enter your email (for first-time setup)")
+            new_password = st.text_input("Set a new password", type="password")
+            confirm_password = st.text_input("Confirm password", type="password")
+
+            if new_email and new_password and confirm_password:
+                if is_valid_email(new_email):
+                    if new_password == confirm_password:
+                        save_to_database(new_email, hash_password(new_password))
+                        st.success("Account created successfully! You can now log in.")
+                    else:
+                        st.error("Passwords do not match!")
+                else:
+                    st.error("Invalid email format.")
+
 
 # User Profile Screen
 elif app_mode == "User Profile":
